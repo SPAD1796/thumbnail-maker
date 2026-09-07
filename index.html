@@ -1,0 +1,865 @@
+Here's the full code. Given how long it is, I'd strongly suggest **not** copy-pasting this — on mobile it's very easy to accidentally cut off the start/end or corrupt the Persian text through the clipboard. Instead, use GitHub's **file upload** (uploads the exact file, no typing/pasting):
+
+1. In your repo, tap **Add file → Upload files**.
+2. Tap **choose your files**, pick the `thumbnail-maker.html` file I sent you from your Downloads/Files app.
+3. After it uploads, tap the file, tap the pencil (rename) icon, and rename it to exactly `index.html`.
+4. Commit, then enable Pages as I described earlier.
+
+That's far more reliable than pasting. But here's the code anyway, in case you need it:
+
+```html
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14151A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<title>بندانگشتی‌ساز | ساخت سریع تامنیل یوتیوب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14151a;
+    --surface:#1c1e25;
+    --surface-2:#23262f;
+    --border:rgba(255,255,255,.08);
+    --border-strong:rgba(255,255,255,.14);
+    --text:#f5f5f2;
+    --text-muted:#9a9ca6;
+    --accent:#f4483a;
+    --accent-dark:#c73326;
+    --accent-2:#ffc93c;
+    --radius-lg:16px;
+    --radius-md:10px;
+    --radius-sm:8px;
+    --radius-pill:999px;
+    --font:'Vazirmatn', system-ui, -apple-system, sans-serif;
+    --bar-h:78px;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    line-height:1.6;
+    padding-bottom:calc(var(--bar-h) + env(safe-area-inset-bottom));
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent); color:#fff;}
+
+  a, button, input, textarea{font-family:inherit;}
+
+  .wrap{
+    max-width:560px;
+    margin:0 auto;
+    padding:18px 16px 28px;
+  }
+
+  header.top{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .logo-mark{
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(155deg, var(--accent), var(--accent-dark));
+    display:flex; align-items:center; justify-content:center;
+    flex:none;
+  }
+  .logo-mark svg{width:16px; height:16px; fill:#fff;}
+  .brand h1{font-size:16px; font-weight:800; margin:0;}
+  .brand p{font-size:12.5px; color:var(--text-muted); margin:2px 0 0;}
+
+  section{margin-bottom:22px;}
+  .section-label{
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--text-muted);
+    margin:0 0 10px;
+  }
+
+  /* preview */
+  .preview-card{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/9;
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+    background:var(--surface);
+    border:1px solid var(--border);
+  }
+  .preview-card.empty{
+    border:1.5px dashed var(--border-strong);
+    display:flex; align-items:center; justify-content:center;
+  }
+  #thumbCanvas{
+    width:100%; height:100%; display:block; object-fit:cover;
+  }
+  .empty-hint{
+    text-align:center; color:var(--text-muted); padding:0 30px;
+  }
+  .empty-hint svg{width:30px; height:30px; margin-bottom:10px; opacity:.6;}
+  .empty-hint p{font-size:13.5px; margin:0;}
+
+  .preview-overlay-msg{
+    position:absolute; inset:0;
+    background:rgba(20,21,26,.72);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:12px;
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .preview-overlay-msg.show{opacity:1; pointer-events:auto;}
+  .spinner{
+    width:34px; height:34px; border-radius:50%;
+    border:3px solid rgba(255,255,255,.18);
+    border-top-color:var(--accent-2);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .preview-overlay-msg span{font-size:13.5px; color:var(--text);}
+
+  .error-banner{
+    margin-top:10px;
+    background:rgba(244,72,58,.12);
+    border:1px solid rgba(244,72,58,.35);
+    color:#ffb2ab;
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:var(--radius-md);
+    display:none;
+    word-break:break-word;
+    white-space:pre-wrap;
+  }
+  .error-banner.show{display:block;}
+
+  /* form controls */
+  textarea, input[type="text"]{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:var(--radius-md);
+    padding:12px 14px;
+    font-size:16px;
+    resize:none;
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  textarea::placeholder, input::placeholder{color:var(--text-muted);}
+  textarea:focus, input:focus{border-color:var(--accent-2);}
+  textarea{min-height:78px;}
+
+  .chip-row{
+    display:flex; gap:8px; overflow-x:auto; padding:2px 2px 6px;
+    margin:10px -2px 0; scrollbar-width:none;
+  }
+  .chip-row::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:none;
+    font-size:13px;
+    padding:8px 14px;
+    border-radius:var(--radius-pill);
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text-muted);
+    white-space:nowrap;
+    cursor:pointer;
+  }
+  .chip.active{
+    border-color:var(--accent-2);
+    color:var(--accent-2);
+    background:rgba(255,201,60,.08);
+  }
+  .chip:active{transform:scale(.96);}
+
+  .upload-box{
+    display:flex; align-items:center; gap:12px;
+    border:1.5px dashed var(--border-strong);
+    border-radius:var(--radius-md);
+    padding:10px 12px;
+    cursor:pointer;
+    color:var(--text-muted);
+    font-size:13.5px;
+  }
+  .upload-box svg{width:18px; height:18px; flex:none; opacity:.7;}
+  .upload-thumb{
+    width:38px; height:38px; border-radius:8px; object-fit:cover; flex:none;
+  }
+  .upload-remove{
+    margin-inline-start:auto;
+    font-size:12.5px; color:var(--accent);
+    background:none; border:none; padding:4px 6px; cursor:pointer;
+  }
+
+  .field-gap{margin-top:14px;}
+
+  .divider{
+    height:1px; background:var(--border); border:none; margin:22px 0;
+  }
+
+  .control-group{
+    display:flex; gap:8px; flex-wrap:wrap;
+  }
+  .seg{
+    display:flex; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-pill); padding:3px; gap:2px;
+  }
+  .seg button{
+    border:none; background:transparent; color:var(--text-muted);
+    font-size:12.5px; padding:7px 13px; border-radius:var(--radius-pill);
+    cursor:pointer;
+  }
+  .seg button.active{background:var(--accent); color:#fff;}
+
+  .swatches{display:flex; gap:8px; flex-wrap:wrap;}
+  .swatch{
+    width:30px; height:30px; border-radius:50%;
+    border:2px solid transparent;
+    cursor:pointer; position:relative;
+  }
+  .swatch.active{border-color:var(--accent-2);}
+
+  .toggle-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:11px 2px;
+    font-size:13.5px;
+    color:var(--text);
+    border-bottom:1px solid var(--border);
+  }
+  .toggle-row:last-child{border-bottom:none;}
+  .switch{
+    width:42px; height:25px; border-radius:var(--radius-pill);
+    background:var(--surface-2); border:1px solid var(--border);
+    position:relative; cursor:pointer; flex:none;
+  }
+  .switch::after{
+    content:''; position:absolute; top:2px; inset-inline-end:2px;
+    width:19px; height:19px; border-radius:50%; background:var(--text-muted);
+    transition:all .15s ease;
+  }
+  .switch.on{background:rgba(244,72,58,.25); border-color:var(--accent);}
+  .switch.on::after{inset-inline-end:calc(100% - 21px); background:var(--accent);}
+
+  input[type="range"]{
+    -webkit-appearance:none; width:100%; height:4px;
+    background:var(--surface-2); border-radius:2px; outline:none;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+    background:var(--accent-2); cursor:pointer; border:3px solid var(--bg);
+  }
+  .range-row{display:flex; align-items:center; gap:12px;}
+  .range-val{font-size:13px; color:var(--text-muted); width:34px; text-align:center; flex:none;}
+
+  .subgroup-title{font-size:12.5px; color:var(--text-muted); margin:16px 0 8px;}
+
+  /* bottom action bar */
+  .action-bar{
+    position:fixed; bottom:0; inset-inline:0;
+    background:rgba(20,21,26,.9);
+    backdrop-filter:blur(10px);
+    border-top:1px solid var(--border);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:flex; gap:10px;
+    z-index:10;
+  }
+  .btn{
+    flex:1;
+    border:none; border-radius:var(--radius-md);
+    font-size:15.5px; font-weight:600;
+    padding:14px 10px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-primary:disabled{background:var(--surface-2); color:var(--text-muted);}
+  .btn-secondary{background:var(--surface-2); color:var(--text); border:1px solid var(--border);}
+  .btn svg{width:17px; height:17px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .spinner{animation:none; border-top-color:var(--accent-2);}
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+    <div class="brand">
+      <h1>بندانگشتی‌ساز</h1>
+      <p>ساخت سریع تامنیل حرفه‌ای یوتیوب با متن فارسی</p>
+    </div>
+  </header>
+
+  <section>
+    <div class="preview-card empty" id="previewCard">
+      <div class="empty-hint" id="emptyHint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10.5" r="1.6"/><path d="M21 16l-5.5-5-4 4L8 12l-5 5"/></svg>
+        <p>پیش‌نمایش بندانگشتی شما اینجا نمایش داده می‌شود</p>
+      </div>
+      <canvas id="thumbCanvas" width="1280" height="720" style="display:none;"></canvas>
+      <div class="preview-overlay-msg" id="loadingMsg">
+        <div class="spinner"></div>
+        <span id="loadingText">در حال ساخت صحنه…</span>
+      </div>
+    </div>
+    <div class="error-banner" id="errorBanner"></div>
+  </section>
+
+  <section>
+    <p class="section-label">صحنه بندانگشتی چه شکلی باشد؟</p>
+    <textarea id="sceneInput" placeholder="مثلاً: یک گیمر با هدفون قرمز جلوی مانیتور، نور نئون آبی و بنفش در پس‌زمینه"></textarea>
+    <div class="chip-row" id="styleChips"></div>
+
+    <div class="field-gap">
+      <div class="upload-box" id="uploadBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0L7 9m5-5l5 5"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+        <span id="uploadLabel">افزودن عکس شما به صحنه (اختیاری)</span>
+      </div>
+      <input type="file" accept="image/*" id="fileInput" style="display:none;">
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <p class="section-label">متن روی بندانگشتی</p>
+    <input type="text" id="titleInput" placeholder="عنوان ویدیو را وارد کنید">
+    <div class="field-gap">
+      <input type="text" id="badgeInput" placeholder="برچسب کوچک، اختیاری — مثلاً «قسمت ۱۲»">
+    </div>
+
+    <p class="subgroup-title">موقعیت متن</p>
+    <div class="seg" id="posSeg">
+      <button data-val="bottom" class="active">پایین</button>
+      <button data-val="center">وسط</button>
+      <button data-val="top">بالا</button>
+    </div>
+
+    <p class="subgroup-title">چیدمان متن</p>
+    <div class="seg" id="alignSeg">
+      <button data-val="start" class="active">راست</button>
+      <button data-val="center">وسط</button>
+      <button data-val="end">چپ</button>
+    </div>
+
+    <p class="subgroup-title">رنگ متن</p>
+    <div class="swatches" id="colorSwatches"></div>
+
+    <p class="subgroup-title">اندازه متن</p>
+    <div class="range-row">
+      <input type="range" id="sizeRange" min="34" max="110" value="72">
+      <span class="range-val" id="sizeVal">۷۲</span>
+    </div>
+
+    <div class="field-gap">
+      <div class="toggle-row">
+        <span>خط دور متن</span>
+        <div class="switch on" id="strokeToggle"></div>
+      </div>
+      <div class="toggle-row">
+        <span>نوار تیره پشت متن</span>
+        <div class="switch" id="barToggle"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="action-bar">
+  <button class="btn btn-secondary" id="regenBtn" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M5.5 15a8 8 0 0013.9 2.5M18.5 9A8 8 0 004.6 6.5"/></svg>
+    بازسازی صحنه
+  </button>
+  <button class="btn btn-primary" id="generateBtn">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    ساخت بندانگشتی
+  </button>
+  <button class="btn btn-primary" id="downloadBtn" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+    دانلود
+  </button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- config ----------
+  const API_KEY = "AQ.Ab8RN6JgSa9SVC_DAqja3PnuN3nLkU8jAoZCfV84UDafyOiLpg";
+  const MODEL = "gemini-2.5-flash-image";
+  const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+
+  const CANVAS_W = 1280, CANVAS_H = 720;
+
+  const STYLE_TAGS = [
+    {label:"🎮 گیمینگ", value:"gaming setup, neon RGB lighting, energetic mood"},
+    {label:"🎥 ولاگ", value:"vlog style, warm natural lighting, lifestyle"},
+    {label:"📚 آموزشی", value:"clean tutorial and educational setting, bright and clear"},
+    {label:"😲 واکنش", value:"shocked reaction expression, dramatic close-up, bold colors"},
+    {label:"📰 خبری", value:"breaking news style, bold dramatic lighting, urgent mood"},
+    {label:"🍳 آشپزی", value:"appetizing cooking scene, warm kitchen lighting"},
+    {label:"💪 فیتنس", value:"fitness gym scene, dynamic action, high energy"},
+    {label:"✈️ سفر", value:"scenic travel destination, cinematic golden hour light"}
+  ];
+
+  const COLORS = ["#ffffff","#ffc93c","#f4483a","#3ad6ff","#7bff5a","#000000"];
+
+  // ---------- state ----------
+  const state = {
+    styleTags: new Set(),
+    refImage: null, // {mimeType, data}
+    bgImage: null,  // HTMLImageElement
+    textPos: "bottom",
+    textAlign: "start",
+    textColor: "#ffffff",
+    fontSize: 72,
+    stroke: true,
+    bar: false,
+    generating: false
+  };
+
+  // ---------- dom refs ----------
+  const $ = (id) => document.getElementById(id);
+  const sceneInput = $("sceneInput");
+  const titleInput = $("titleInput");
+  const badgeInput = $("badgeInput");
+  const previewCard = $("previewCard");
+  const emptyHint = $("emptyHint");
+  const canvas = $("thumbCanvas");
+  const ctx = canvas.getContext("2d");
+  const loadingMsg = $("loadingMsg");
+  const loadingText = $("loadingText");
+  const errorBanner = $("errorBanner");
+  const generateBtn = $("generateBtn");
+  const regenBtn = $("regenBtn");
+  const downloadBtn = $("downloadBtn");
+  const uploadBox = $("uploadBox");
+  const uploadLabel = $("uploadLabel");
+  const fileInput = $("fileInput");
+  const sizeRange = $("sizeRange");
+  const sizeVal = $("sizeVal");
+
+  // ---------- helpers ----------
+  const faDigits = "۰۱۲۳۴۵۶۷۸۹";
+  function toFa(n){ return String(n).replace(/[0-9]/g, d => faDigits[d]); }
+
+  function isRTLText(str){ return /[\u0590-\u05FF\u0600-\u06FF\u0700-\u074F]/.test(str); }
+
+  function showError(msg){
+    errorBanner.textContent = msg;
+    errorBanner.classList.add("show");
+  }
+  function clearError(){ errorBanner.classList.remove("show"); }
+
+  function setLoading(on, text){
+    state.generating = on;
+    loadingMsg.classList.toggle("show", on);
+    if(text) loadingText.textContent = text;
+    generateBtn.disabled = on;
+    regenBtn.disabled = on;
+  }
+
+  // ---------- style chips ----------
+  const chipRow = $("styleChips");
+  STYLE_TAGS.forEach(tag => {
+    const el = document.createElement("button");
+    el.className = "chip";
+    el.type = "button";
+    el.textContent = tag.label;
+    el.addEventListener("click", () => {
+      if(state.styleTags.has(tag.value)){
+        state.styleTags.delete(tag.value);
+        el.classList.remove("active");
+      } else {
+        state.styleTags.add(tag.value);
+        el.classList.add("active");
+      }
+    });
+    chipRow.appendChild(el);
+  });
+
+  // ---------- color swatches ----------
+  const swatchWrap = $("colorSwatches");
+  COLORS.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "swatch" + (i === 0 ? " active" : "");
+    el.style.background = c;
+    if(c === "#ffffff") el.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,.25)";
+    el.addEventListener("click", () => {
+      state.textColor = c;
+      [...swatchWrap.children].forEach(s => s.classList.remove("active"));
+      el.classList.add("active");
+      renderCanvas();
+    });
+    swatchWrap.appendChild(el);
+  });
+
+  // ---------- segmented controls ----------
+  function wireSeg(id, stateKey){
+    const seg = $(id);
+    seg.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      [...seg.children].forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state[stateKey] = btn.dataset.val;
+      renderCanvas();
+    });
+  }
+  wireSeg("posSeg", "textPos");
+  wireSeg("alignSeg", "textAlign");
+
+  // ---------- toggles ----------
+  $("strokeToggle").addEventListener("click", function(){
+    this.classList.toggle("on");
+    state.stroke = this.classList.contains("on");
+    renderCanvas();
+  });
+  $("barToggle").addEventListener("click", function(){
+    this.classList.toggle("on");
+    state.bar = this.classList.contains("on");
+    renderCanvas();
+  });
+
+  // ---------- font size ----------
+  sizeRange.addEventListener("input", () => {
+    state.fontSize = parseInt(sizeRange.value, 10);
+    sizeVal.textContent = toFa(state.fontSize);
+    renderCanvas();
+  });
+  sizeVal.textContent = toFa(sizeRange.value);
+
+  // ---------- text inputs live update ----------
+  titleInput.addEventListener("input", renderCanvas);
+  badgeInput.addEventListener("input", renderCanvas);
+
+  // ---------- reference image upload ----------
+  uploadBox.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 1024;
+        let w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const off = document.createElement("canvas");
+        off.width = w; off.height = h;
+        off.getContext("2d").drawImage(img, 0, 0, w, h);
+        const dataUrl = off.toDataURL("image/jpeg", 0.85);
+        state.refImage = { mimeType:"image/jpeg", data: dataUrl.split(",")[1] };
+
+        uploadBox.innerHTML = "";
+        const thumb = document.createElement("img");
+        thumb.className = "upload-thumb";
+        thumb.src = dataUrl;
+        const label = document.createElement("span");
+        label.textContent = "عکس اضافه شد";
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "upload-remove";
+        removeBtn.textContent = "حذف";
+        removeBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          state.refImage = null;
+          fileInput.value = "";
+          resetUploadBox();
+        });
+        uploadBox.appendChild(thumb);
+        uploadBox.appendChild(label);
+        uploadBox.appendChild(removeBtn);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function resetUploadBox(){
+    uploadBox.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0L7 9m5-5l5 5"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+      <span>افزودن عکس شما به صحنه (اختیاری)</span>`;
+  }
+
+  // ---------- prompt building ----------
+  function buildPrompt(){
+    const scene = sceneInput.value.trim();
+    const tags = [...state.styleTags].join(", ");
+    let prompt = "A professional, ultra high quality, eye-catching YouTube thumbnail background scene. Cinematic lighting, vivid saturated colors, high contrast, dramatic composition, sharp focus, 16:9 widescreen framing.";
+    prompt += ` Scene: ${scene}.`;
+    if(tags) prompt += ` Visual style: ${tags}.`;
+    if(state.refImage){
+      prompt += " Use the person in the provided reference photo as the main subject, keep their face and identity accurate and recognizable, and integrate them naturally into the described scene and lighting.";
+    }
+    prompt += " Absolutely do not render any text, letters, numbers, words, captions, subtitles, watermarks or logos anywhere in the image, in any language. Leave open, uncluttered space suitable for adding a title on top of the image afterwards. Focus only on the visual scene, subject and lighting.";
+    return prompt;
+  }
+
+  // ---------- canvas drawing ----------
+  function drawImageCover(img, cw, ch){
+    const ir = img.width / img.height, cr = cw / ch;
+    let sx=0, sy=0, sw=img.width, sh=img.height;
+    if(ir > cr){ sw = img.height * cr; sx = (img.width - sw) / 2; }
+    else { sh = img.width / cr; sy = (img.height - sh) / 2; }
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+  }
+
+  function wrapLines(text, maxWidth){
+    const words = text.split(/\s+/).filter(Boolean);
+    const lines = [];
+    let cur = "";
+    words.forEach(word => {
+      const test = cur ? cur + " " + word : word;
+      if(ctx.measureText(test).width > maxWidth && cur){
+        lines.push(cur);
+        cur = word;
+      } else {
+        cur = test;
+      }
+    });
+    if(cur) lines.push(cur);
+    return lines;
+  }
+
+  function drawTextBlock(text, opts){
+    const { fontSize, weight, color, align, dir, yCenter, maxWidth, stroke, x } = opts;
+    ctx.font = `${weight} ${fontSize}px Vazirmatn, sans-serif`;
+    ctx.direction = dir;
+    ctx.textAlign = align;
+    ctx.textBaseline = "middle";
+    const lineHeight = fontSize * 1.22;
+    const lines = wrapLines(text, maxWidth);
+    const totalH = lines.length * lineHeight;
+    let startY = yCenter - totalH/2 + lineHeight/2;
+
+    if(state.bar){
+      let maxLineW = 0;
+      lines.forEach(l => { maxLineW = Math.max(maxLineW, ctx.measureText(l).width); });
+      const padX = 26, padY = 16;
+      const barW = maxLineW + padX*2;
+      const barH = totalH + padY*2;
+      let barX;
+      if(align === "start") barX = dir === "rtl" ? x - barW : x;
+      else if(align === "end") barX = dir === "rtl" ? x : x - barW;
+      else barX = x - barW/2;
+      ctx.fillStyle = "rgba(10,10,12,0.55)";
+      roundRect(barX, yCenter - barH/2, barW, barH, 12);
+      ctx.fill();
+    }
+
+    lines.forEach((line, i) => {
+      const ly = startY + i*lineHeight;
+      if(stroke){
+        ctx.lineJoin = "round";
+        ctx.miterLimit = 2;
+        ctx.lineWidth = fontSize * 0.11;
+        ctx.strokeStyle = "rgba(0,0,0,0.85)";
+        ctx.strokeText(line, x, ly);
+      }
+      ctx.shadowColor = "rgba(0,0,0,0.35)";
+      ctx.shadowBlur = fontSize * 0.08;
+      ctx.fillStyle = color;
+      ctx.fillText(line, x, ly);
+      ctx.shadowBlur = 0;
+    });
+
+    return totalH;
+  }
+
+  function roundRect(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+
+  function renderCanvas(){
+    if(!state.bgImage) return; // nothing generated yet
+    ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+    drawImageCover(state.bgImage, CANVAS_W, CANVAS_H);
+
+    const pad = 56;
+    const maxWidth = CANVAS_W - pad*2;
+    const dir = isRTLText(titleInput.value) ? "rtl" : (titleInput.value ? "ltr" : "rtl");
+    const alignMap = { start: dir === "rtl" ? "right" : "left",
+                        end:   dir === "rtl" ? "left"  : "right",
+                        center:"center" };
+    const canvasAlign = alignMap[state.textAlign];
+    let x;
+    if(canvasAlign === "right") x = CANVAS_W - pad;
+    else if(canvasAlign === "left") x = pad;
+    else x = CANVAS_W/2;
+
+    let yCenter;
+    if(state.textPos === "top") yCenter = pad + 70;
+    else if(state.textPos === "center") yCenter = CANVAS_H/2;
+    else yCenter = CANVAS_H - pad - 70;
+
+    const title = titleInput.value.trim();
+    if(title){
+      drawTextBlock(title, {
+        fontSize: state.fontSize, weight: 800, color: state.textColor,
+        align: canvasAlign, dir, yCenter, maxWidth, stroke: state.stroke, x
+      });
+    }
+
+    const badge = badgeInput.value.trim();
+    if(badge){
+      const bDir = isRTLText(badge) ? "rtl" : "ltr";
+      ctx.font = `700 ${34}px Vazirmatn, sans-serif`;
+      ctx.direction = bDir;
+      const tw = ctx.measureText(badge).width;
+      const padX = 20, padY = 12;
+      const bw = tw + padX*2, bh = 34 + padY*1.4;
+      const bx = CANVAS_W - 40 - bw;
+      const by = 40;
+      ctx.fillStyle = "#f4483a";
+      roundRect(bx, by, bw, bh, bh/2);
+      ctx.fill();
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(badge, bx + bw/2, by + bh/2 + 1);
+    }
+  }
+
+  // ---------- API call ----------
+  async function generateBackground(){
+    const scene = sceneInput.value.trim();
+    if(!scene){
+      showError("لطفاً توضیح صحنه بندانگشتی را بنویسید.");
+      return;
+    }
+    clearError();
+    setLoading(true, "در حال ساخت صحنه…");
+
+    try{
+      const parts = [{ text: buildPrompt() }];
+      if(state.refImage){
+        parts.push({ inlineData: { mimeType: state.refImage.mimeType, data: state.refImage.data } });
+      }
+      const body = {
+        contents: [{ parts }],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+          imageConfig: { aspectRatio: "16:9" }
+        }
+      };
+
+      let res;
+      try{
+        res = await fetch(ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": API_KEY },
+          body: JSON.stringify(body)
+        });
+      } catch(networkErr){
+        throw new Error("درخواست به سرور گوگل نرسید (خطای شبکه/CORS). اتصال اینترنت را بررسی کنید. جزئیات فنی: " + networkErr.message);
+      }
+
+      const rawText = await res.text();
+      let data = null;
+      try{ data = JSON.parse(rawText); } catch(e){ /* not JSON */ }
+
+      if(!res.ok){
+        const apiMsg = data?.error?.message;
+        const apiStatus = data?.error?.status;
+        const detail = apiMsg ? `${apiMsg}${apiStatus ? " (" + apiStatus + ")" : ""}` : (rawText || "بدون جزئیات");
+        throw new Error(`خطای سرویس گوگل [کد ${res.status}]: ${detail}`);
+      }
+
+      const candidate = data?.candidates?.[0];
+      const imgPart = candidate?.content?.parts?.find(p => p.inlineData);
+
+      if(!imgPart){
+        const reason = candidate?.finishReason;
+        if(reason === "IMAGE_SAFETY" || reason === "SAFETY"){
+          throw new Error("این توصیف رد شد. لطفاً توصیف صحنه را تغییر دهید و دوباره تلاش کنید.");
+        }
+        throw new Error("تصویری ساخته نشد. لطفاً دوباره تلاش کنید.");
+      }
+
+      const b64 = imgPart.inlineData.data;
+      const mime = imgPart.inlineData.mimeType || "image/png";
+
+      await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => { state.bgImage = img; resolve(); };
+        img.onerror = reject;
+        img.src = `data:${mime};base64,${b64}`;
+      });
+
+      emptyHint.style.display = "none";
+      canvas.style.display = "block";
+      renderCanvas();
+      regenBtn.style.display = "flex";
+      downloadBtn.style.display = "flex";
+      generateBtn.style.display = "none";
+
+    } catch(err){
+      showError(err.message || "خطای غیرمنتظره‌ای رخ داد. اتصال اینترنت را بررسی کنید.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  generateBtn.addEventListener("click", generateBackground);
+  regenBtn.addEventListener("click", generateBackground);
+
+  downloadBtn.addEventListener("click", () => {
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `thumbnail-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  });
+
+  // ---------- persistence (local only, convenience) ----------
+  function saveLocal(){
+    try{
+      localStorage.setItem("thumbmaker_state", JSON.stringify({
+        scene: sceneInput.value,
+        title: titleInput.value,
+        badge: badgeInput.value
+      }));
+    }catch(e){}
+  }
+  [sceneInput, titleInput, badgeInput].forEach(el => el.addEventListener("input", saveLocal));
+  try{
+    const saved = JSON.parse(localStorage.getItem("thumbmaker_state") || "null");
+    if(saved){
+      sceneInput.value = saved.scene || "";
+      titleInput.value = saved.title || "";
+      badgeInput.value = saved.badge || "";
+    }
+  }catch(e){}
+
+})();
+</script>
+</body>
+</html>
+```
